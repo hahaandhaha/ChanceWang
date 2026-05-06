@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: smart-customer-service
+  codec:
+    max-in-memory-size: 2MB
+
+server:
+  port: 8080
+
+app:
+  chat:
+    memory:
+      max-messages: ${CHAT_MEMORY_MAX_MESSAGES:20}
+  qwen:
+    api-key: ${DASHSCOPE_API_KEY}
+    base-url: ${DASHSCOPE_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+    model: ${QWEN_MODEL:qwen3.5-plus}
+    log-requests: ${QWEN_LOG_REQUESTS:false}
+    log-responses: ${QWEN_LOG_RESPONSES:false}
+  baidu-map-mcp:
+    enabled: ${BAIDU_MAPS_MCP_ENABLED:true}
+    log-events: ${BAIDU_MAPS_MCP_LOG_EVENTS:false}
+    command:
+      - cmd.exe
+      - /c
+      - npx
+      - -y
+      - "@baidumap/mcp-server-baidu-map"
+    trigger-keywords:
+      - 地图
+      - 地点
+      - 地址
+      - 景点
+      - 周边
+      - 位置
+      - POI
+      - poi
+      - 天气
+      - 路线
+      - 路径
+      - 导航
+      - 交通
+      - 拥堵
+      - 出行
+      - 公交
+      - 地铁
+      - 打车
+      - 驾车
+      - 步行
+      - 骑行
+      - 距离
+      - 多远
+      - route
+      - directions
+      - location
+      - weather
