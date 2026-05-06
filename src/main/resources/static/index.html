@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能客服</title>
+    <style>
+        :root {
+            --bg: #f3efe7;
+            --panel: rgba(255, 252, 246, 0.92);
+            --ink: #16202a;
+            --muted: #6b7280;
+            --line: rgba(22, 32, 42, 0.1);
+            --accent: #0f766e;
+            --user: #16202a;
+            --assistant: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 36%),
+                radial-gradient(circle at top right, rgba(217, 119, 6, 0.12), transparent 28%),
+                linear-gradient(180deg, #f7f2ea 0%, #efe8dd 100%);
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
+
+        .shell {
+            width: min(960px, 100%);
+            height: min(88vh, 900px);
+            background: var(--panel);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 28px;
+            box-shadow: 0 24px 80px rgba(22, 32, 42, 0.12);
+            overflow: hidden;
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            backdrop-filter: blur(12px);
+        }
+
+        .hero {
+            padding: 28px 28px 10px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(15, 118, 110, 0.08);
+            color: var(--accent);
+            font-size: 13px;
+            letter-spacing: 0.04em;
+        }
+
+        h1 {
+            margin: 16px 0 8px;
+            font-size: clamp(28px, 4vw, 42px);
+            line-height: 1.05;
+        }
+
+        .sub {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+            max-width: 720px;
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 0 28px 18px;
+        }
+
+        .chip {
+            border: 0;
+            cursor: pointer;
+            border-radius: 999px;
+            padding: 10px 14px;
+            background: rgba(22, 32, 42, 0.06);
+            color: var(--ink);
+            font-size: 14px;
+            transition: transform 160ms ease, background 160ms ease;
+        }
+
+        .chip:hover {
+            transform: translateY(-1px);
+            background: rgba(22, 32, 42, 0.1);
+        }
+
+        .messages {
+            overflow-y: auto;
+            padding: 8px 28px 20px;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .welcome {
+            padding: 24px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(217, 119, 6, 0.08));
+            color: var(--ink);
+        }
+
+        .message {
+            display: flex;
+            margin-top: 18px;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .bubble {
+            max-width: min(82%, 720px);
+            padding: 16px 18px;
+            border-radius: 22px;
+            white-space: pre-wrap;
+            line-height: 1.7;
+            box-shadow: 0 10px 30px rgba(22, 32, 42, 0.08);
+        }
+
+        .user .bubble {
+            background: var(--user);
+            color: #fff;
+            border-bottom-right-radius: 8px;
+        }
+
+        .assistant .bubble {
+            background: var(--assistant);
+            border: 1px solid rgba(22, 32, 42, 0.08);
+            border-bottom-left-radius: 8px;
+        }
+
+        .composer {
+            padding: 18px 20px 20px;
+            background: rgba(255, 255, 255, 0.55);
+        }
+
+        .status {
+            font-size: 13px;
+            color: var(--muted);
+            margin: 0 0 12px;
+        }
+
+        .form {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 56px;
+            max-height: 180px;
+            resize: vertical;
+            border-radius: 18px;
+            border: 1px solid rgba(22, 32, 42, 0.12);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 16px;
+            font: inherit;
+            color: var(--ink);
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: rgba(15, 118, 110, 0.45);
+            box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.08);
+        }
+
+        button.primary,
+        button.secondary {
+            height: 56px;
+            border: 0;
+            border-radius: 18px;
+            padding: 0 18px;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        button.primary {
+            background: linear-gradient(135deg, var(--accent), #155e75);
+            color: #fff;
+            min-width: 108px;
+        }
+
+        button.secondary {
+            background: rgba(22, 32, 42, 0.08);
+            color: var(--ink);
+            min-width: 98px;
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 760px) {
+            body {
+                padding: 12px;
+            }
+
+            .shell {
+                height: 92vh;
+                border-radius: 22px;
+            }
+
+            .form {
+                grid-template-columns: 1fr;
+            }
+
+            button.primary,
+            button.secondary {
+                width: 100%;
+            }
+
+            .bubble {
+                max-width: 92%;
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="shell">
+    <section class="hero">
+        <div class="eyebrow">Qwen + 百度地图 MCP（本地 stdio）</div>
+        <h1>智能客服控制台</h1>
+        <p class="sub">这是一个最小实现版本：原生前端，Spring Boot + LangChain4j 后端，Qwen 流式输出，以及本地 stdio 方式拉起的百度地图 MCP。现在上下文由后端会话记忆管理，前端只负责展示。</p>
+    </section>
+
+    <section class="chips">
+        <button class="chip" type="button" data-prompt="帮我推荐上海徐汇区适合亲子周末去的 3 个地点">亲子地点推荐</button>
+        <button class="chip" type="button" data-prompt="北京西站到天安门有哪些出行方式？">路线规划</button>
+        <button class="chip" type="button" data-prompt="深圳南山区今天适合出门吗？">天气咨询</button>
+        <button class="chip" type="button" data-prompt="请介绍一下你能提供哪些客服能力">能力介绍</button>
+    </section>
+
+    <section class="messages" id="messages">
+        <div class="welcome" id="welcome">
+            <strong>使用提示</strong>
+            <p>1. 页面加载时会先向后端创建一个 conversationId，后续上下文由后端记忆。</p>
+            <p>2. 普通问答会直接走 Qwen 流式输出。</p>
+            <p>3. 涉及路线、地点、天气、地理信息时，后端会按需启用本地百度地图 MCP 工具。</p>
+        </div>
+    </section>
+
+    <section class="composer">
+        <p class="status" id="status">状态：正在初始化会话...</p>
+        <form class="form" id="chat-form">
+            <textarea id="message-input" placeholder="例如：帮我规划从上海虹桥站到外滩的路线，并顺便推荐附近适合晚餐的地方"></textarea>
+            <button class="primary" id="send-button" type="submit">发送</button>
+            <button class="secondary" id="clear-button" type="button">清空对话</button>
+        </form>
+    </section>
+</main>
+
+<script>
+    const messages = [];
+    const messagesEl = document.getElementById("messages");
+    const welcomeEl = document.getElementById("welcome");
+    const statusEl = document.getElementById("status");
+    const formEl = document.getElementById("chat-form");
+    const inputEl = document.getElementById("message-input");
+    const sendButtonEl = document.getElementById("send-button");
+    const clearButtonEl = document.getElementById("clear-button");
+    const chipEls = document.querySelectorAll(".chip");
+
+    let busy = false;
+    let conversationId = null;
+
+    chipEls.forEach((chip) => {
+        chip.addEventListener("click", () => {
+            inputEl.value = chip.dataset.prompt || "";
+            inputEl.focus();
+        });
+    });
+
+    clearButtonEl.addEventListener("click", async () => {
+        if (busy) {
+            return;
+        }
+
+        setControlsDisabled(true);
+        statusEl.textContent = "状态：正在重置会话...";
+
+        try {
+            await resetConversation();
+            statusEl.textContent = "状态：已创建新会话";
+        } catch (error) {
+            statusEl.textContent = "状态：重置失败";
+            appendBubble("assistant", `重置会话失败：${toErrorMessage(error)}`);
+        } finally {
+            setControlsDisabled(false);
+        }
+    });
+
+    formEl.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const text = inputEl.value.trim();
+        if (!text || busy) {
+            return;
+        }
+
+        busy = true;
+        setControlsDisabled(true);
+
+        try {
+            await ensureConversation();
+            statusEl.textContent = "状态：正在请求 Qwen...";
+
+            hideWelcome();
+            appendBubble("user", text);
+            messages.push({ role: "user", content: text });
+            inputEl.value = "";
+
+            const assistantBubble = appendBubble("assistant", "");
+            let assistantText = "";
+
+            const response = await fetch("/api/chat/stream", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/x-ndjson"
+                },
+                body: JSON.stringify({
+                    conversationId,
+                    message: text
+                })
+            });
+
+            if (!response.ok || !response.body) {
+                const reason = await response.text();
+                throw new Error(reason || "请求失败");
+            }
+
+            statusEl.textContent = "状态：正在流式输出...";
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let buffer = "";
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    break;
+                }
+
+                buffer += decoder.decode(value, { stream: true });
+                const parts = buffer.split("\n");
+                buffer = parts.pop() || "";
+
+                for (const line of parts) {
+                    processEvent(line, assistantBubble);
+                }
+
+                assistantText = assistantBubble.textContent;
+                scrollToBottom();
+            }
+
+            const tail = buffer + decoder.decode();
+            if (tail.trim()) {
+                processEvent(tail, assistantBubble);
+                assistantText = assistantBubble.textContent;
+            }
+
+            if (!assistantText.trim()) {
+                assistantText = "没有收到模型输出，请检查 API Key、Qwen 配置或 MCP 工具状态。";
+                assistantBubble.textContent = assistantText;
+            }
+
+            messages.push({ role: "assistant", content: assistantText });
+        } catch (error) {
+            const message = toErrorMessage(error);
+            appendBubble("assistant", `请求失败：${message}`);
+            statusEl.textContent = "状态：请求失败";
+        } finally {
+            busy = false;
+            setControlsDisabled(false);
+            scrollToBottom();
+        }
+    });
+
+    async function ensureConversation() {
+        if (conversationId) {
+            return;
+        }
+        await createConversation();
+    }
+
+    async function createConversation() {
+        const response = await fetch("/api/chat/sessions", {
+            method: "POST"
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text() || "创建会话失败");
+        }
+
+        const data = await response.json();
+        conversationId = data.conversationId;
+        statusEl.textContent = "状态：会话已就绪";
+    }
+
+    async function resetConversation() {
+        if (conversationId) {
+            const response = await fetch(`/api/chat/sessions/${encodeURIComponent(conversationId)}`, {
+                method: "DELETE"
+            });
+
+            if (!response.ok) {
+                throw new Error(await response.text() || "删除会话失败");
+            }
+        }
+
+        conversationId = null;
+        messages.length = 0;
+        messagesEl.innerHTML = "";
+        messagesEl.appendChild(welcomeEl);
+        await createConversation();
+    }
+
+    function processEvent(line, assistantBubble) {
+        if (!line.trim()) {
+            return;
+        }
+
+        const eventData = JSON.parse(line);
+        if (eventData.type === "delta") {
+            assistantBubble.textContent += eventData.text || "";
+            statusEl.textContent = "状态：回复生成中...";
+            return;
+        }
+
+        if (eventData.type === "done") {
+            const usage = eventData.usage;
+            if (usage && usage.totalTokens != null) {
+                statusEl.textContent = `状态：完成，累计 Tokens ${usage.totalTokens}`;
+            } else {
+                statusEl.textContent = "状态：完成";
+            }
+            return;
+        }
+
+        if (eventData.type === "error") {
+            throw new Error(eventData.message || "流式请求出错");
+        }
+    }
+
+    function hideWelcome() {
+        if (welcomeEl.parentNode === messagesEl) {
+            messagesEl.removeChild(welcomeEl);
+        }
+    }
+
+    function appendBubble(role, text) {
+        const wrapper = document.createElement("div");
+        wrapper.className = `message ${role}`;
+
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        bubble.textContent = text;
+
+        wrapper.appendChild(bubble);
+        messagesEl.appendChild(wrapper);
+        scrollToBottom();
+        return bubble;
+    }
+
+    function setControlsDisabled(disabled) {
+        sendButtonEl.disabled = disabled;
+        clearButtonEl.disabled = disabled;
+        inputEl.disabled = disabled;
+    }
+
+    function scrollToBottom() {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function toErrorMessage(error) {
+        return error instanceof Error ? error.message : "未知错误";
+    }
+
+    createConversation().catch((error) => {
+        statusEl.textContent = "状态：会话初始化失败";
+        appendBubble("assistant", `初始化会话失败：${toErrorMessage(error)}`);
+    });
+</script>
+</body>
+</html>
